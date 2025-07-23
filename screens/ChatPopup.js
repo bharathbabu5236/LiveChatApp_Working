@@ -12,6 +12,8 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
     const [chatId, setChatId] = useState(null);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
     const [userType, setUserType] = useState(null); // 'customer' or 'agent'
+    const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '' });
+    const [botStep, setBotStep] = useState('welcome'); // 'welcome', 'askName', 'askPhone', 'showAgentOption'
     const [loadingChatSetup, setLoadingChatSetup] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
@@ -29,6 +31,8 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
             setChatId(null);
             setUserId(null);
             setSelectedDepartment(null);
+            setCustomerInfo({ name: '', phone: '' });
+            setBotStep('welcome');
         }
     }, [visible]);
 
@@ -39,6 +43,9 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
             if (onAgentSelect) {
                 onAgentSelect();
             }
+        } else if (userType === 'customer') {
+            // Start the AI bot conversation
+            setBotStep('askName');
         }
     }, [userType, onClose, onAgentSelect]);
 
@@ -214,6 +221,38 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
         setIsMinimized(!isMinimized);
     };
 
+    const handleBotInput = () => {
+        if (inputText.trim() === '') return;
+
+        if (botStep === 'askName') {
+            setCustomerInfo(prev => ({ ...prev, name: inputText.trim() }));
+            setBotStep('askPhone');
+            setInputText('');
+        } else if (botStep === 'askPhone') {
+            setCustomerInfo(prev => ({ ...prev, phone: inputText.trim() }));
+            setBotStep('showAgentOption');
+            setInputText('');
+        }
+    };
+
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            if (botStep === 'askName' || botStep === 'askPhone') {
+                handleBotInput();
+            } else if (selectedDepartment) {
+                handleSendMessage();
+            }
+        }
+    };
+
+    const handleSpeakToAgent = () => {
+        console.log('Speak to Agent button pressed');
+        console.log('Current botStep:', botStep);
+        setBotStep('departmentSelection');
+        console.log('BotStep set to departmentSelection');
+    };
+
     if (!visible) return null;
 
     // User type selection view
@@ -262,16 +301,16 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
         );
     }
 
-    // Department selection view (only for customers)
-    if (userType === 'customer' && !selectedDepartment) {
+    // Bot conversation views for customers
+    if (userType === 'customer' && botStep !== 'departmentSelection') {
         return (
             <View style={styles.popupContainer}>
                 <View style={styles.popupHeader}>
                     <View style={styles.headerContent}>
                         <MaterialIcons name="smart-toy" size={24} color="#3498db" />
                         <View style={styles.headerTextContainer}>
-                            <Text style={styles.headerTitle}>Welcome to HealthBuddy</Text>
-                            <Text style={styles.headerSubtitle}>Our bot guide can help you through the process.</Text>
+                            <Text style={styles.headerTitle}>AI Assistant</Text>
+                            <Text style={styles.headerSubtitle}>Collecting your information</Text>
                         </View>
                     </View>
                     <TouchableOpacity onPress={() => setUserType(null)} style={styles.backButton}>
@@ -283,8 +322,114 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
                 </View>
                 
                 <View style={styles.popupBody}>
+                    <View style={styles.botMessages}>
+                        {botStep === 'askName' && (
+                            <View style={styles.botMessage}>
+                                <MaterialIcons name="smart-toy" size={20} color="#3498db" />
+                                <Text style={styles.botMessageText}>Hello! I'm your AI assistant. What's your name?</Text>
+                            </View>
+                        )}
+                        
+                        {botStep === 'askPhone' && (
+                            <>
+                                <View style={styles.botMessage}>
+                                    <MaterialIcons name="smart-toy" size={20} color="#3498db" />
+                                    <Text style={styles.botMessageText}>Hello! I'm your AI assistant. What's your name?</Text>
+                                </View>
+                                <View style={styles.userMessage}>
+                                    <Text style={styles.userMessageText}>{customerInfo.name}</Text>
+                                </View>
+                                <View style={styles.botMessage}>
+                                    <MaterialIcons name="smart-toy" size={20} color="#3498db" />
+                                    <Text style={styles.botMessageText}>Nice to meet you, {customerInfo.name}! What's your phone number?</Text>
+                                </View>
+                            </>
+                        )}
+                        
+                        {botStep === 'showAgentOption' && (
+                            <>
+                                <View style={styles.botMessage}>
+                                    <MaterialIcons name="smart-toy" size={20} color="#3498db" />
+                                    <Text style={styles.botMessageText}>Hello! I'm your AI assistant. What's your name?</Text>
+                                </View>
+                                <View style={styles.userMessage}>
+                                    <Text style={styles.userMessageText}>{customerInfo.name}</Text>
+                                </View>
+                                <View style={styles.botMessage}>
+                                    <MaterialIcons name="smart-toy" size={20} color="#3498db" />
+                                    <Text style={styles.botMessageText}>Nice to meet you, {customerInfo.name}! What's your phone number?</Text>
+                                </View>
+                                <View style={styles.userMessage}>
+                                    <Text style={styles.userMessageText}>{customerInfo.phone}</Text>
+                                </View>
+                                <View style={styles.botMessage}>
+                                    <MaterialIcons name="smart-toy" size={20} color="#3498db" />
+                                    <Text style={styles.botMessageText}>Thank you! I have your information. Would you like to speak with a live agent?</Text>
+                                </View>
+                            </>
+                        )}
+                    </View>
+                    
+                    {botStep === 'showAgentOption' && (
+                        <View style={styles.agentButtonContainer}>
+                            <TouchableOpacity
+                                style={styles.speakToAgentButton}
+                                onPress={handleSpeakToAgent}
+                                activeOpacity={0.7}
+                            >
+                                <MaterialIcons name="support-agent" size={20} color="white" />
+                                <Text style={styles.speakToAgentButtonText}>Speak to an Agent</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+                
+                {(botStep === 'askName' || botStep === 'askPhone') && (
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.textInput}
+                            value={inputText}
+                            onChangeText={setInputText}
+                            placeholder={botStep === 'askName' ? "Enter your name..." : "Enter your phone number..."}
+                            multiline
+                            onKeyPress={handleKeyPress}
+                        />
+                        <TouchableOpacity style={styles.sendButton} onPress={handleBotInput}>
+                            <MaterialIcons name="send" size={16} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                )}
+                
+                <View style={styles.popupFooter}>
+                    <Text style={styles.footerText}>Powered By AI</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // Department selection view (only for customers after bot conversation)
+    if (userType === 'customer' && botStep === 'departmentSelection' && !selectedDepartment) {
+        return (
+            <View style={styles.popupContainer}>
+                <View style={styles.popupHeader}>
+                    <View style={styles.headerContent}>
+                        <MaterialIcons name="smart-toy" size={24} color="#3498db" />
+                        <View style={styles.headerTextContainer}>
+                            <Text style={styles.headerTitle}>Welcome to HealthBuddy</Text>
+                            <Text style={styles.headerSubtitle}>Our bot guide can help you through the process.</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity onPress={() => setBotStep('showAgentOption')} style={styles.backButton}>
+                        <MaterialIcons name="arrow-back" size={20} color="#666" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                        <MaterialIcons name="close" size={20} color="#666" />
+                    </TouchableOpacity>
+                </View>
+                
+                <View style={styles.popupBody}>
                     <Text style={styles.instructionText}>
-                        Hi! Please select a department to start chatting with the next available agent.
+                        Hi {customerInfo.name}! Please select a department to start chatting with the next available agent.
                     </Text>
                     
                     <TouchableOpacity
@@ -394,6 +539,7 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
                     onChangeText={setInputText}
                     placeholder="Type your message..."
                     multiline
+                    onKeyPress={handleKeyPress}
                 />
                 <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
                     <MaterialIcons name="send" size={16} color="white" />
@@ -525,6 +671,63 @@ const styles = StyleSheet.create({
     backButton: {
         padding: 5,
         marginRight: 5,
+    },
+    botMessages: {
+        padding: 15,
+        flex: 1,
+    },
+    botMessage: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 15,
+        backgroundColor: '#f8f9fa',
+        padding: 12,
+        borderRadius: 12,
+        borderBottomLeftRadius: 4,
+    },
+    botMessageText: {
+        fontSize: 14,
+        color: '#2c3e50',
+        marginLeft: 8,
+        flex: 1,
+        lineHeight: 20,
+    },
+    userMessage: {
+        alignSelf: 'flex-end',
+        backgroundColor: '#3498db',
+        padding: 12,
+        borderRadius: 12,
+        borderBottomRightRadius: 4,
+        marginBottom: 15,
+        maxWidth: '80%',
+    },
+    userMessageText: {
+        fontSize: 14,
+        color: 'white',
+        lineHeight: 20,
+    },
+    speakToAgentButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#2ecc71',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        marginTop: 10,
+        justifyContent: 'center',
+        alignSelf: 'flex-start',
+    },
+    speakToAgentButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    agentButtonContainer: {
+        padding: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#e9ecef',
+        backgroundColor: '#fff',
     },
     popupFooter: {
         padding: 10,

@@ -200,6 +200,13 @@ const ChatScreen = () => {
         setShowScrollButton(!isCloseToBottom);
     };
 
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSendMessage();
+        }
+    };
+
     // Conditionally render department selection or chat interface
     if (!selectedDepartment) {
         return (
@@ -281,6 +288,7 @@ const ChatScreen = () => {
                     onChangeText={setInputText}
                     placeholder="Type your message..."
                     multiline
+                    onKeyPress={handleKeyPress}
                 />
                 <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
                     <MaterialIcons name="send" size={24} color="white" />

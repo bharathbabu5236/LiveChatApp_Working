@@ -9,9 +9,12 @@ import { MaterialIcons } from '@expo/vector-icons'; // Added MaterialIcons impor
 const AgentChatListScreen = () => {
     const [chats, setChats] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const navigation = useNavigation();
     const currentAgentId = auth.currentUser?.uid;
     const currentAgentEmail = auth.currentUser?.email;
+
+
 
     const AGENT_DEPARTMENT_MAP = {
         'UVGDfqIPKYVblK3OhRfenFa0BVp2': 'doctor', // Doctor Agent's UID
@@ -48,6 +51,7 @@ const AgentChatListScreen = () => {
                 ...doc.data(),
                 lastMessageAt: doc.data().lastMessageAt?.toDate(),
             }));
+            console.log('AgentChatListScreen: Loaded chats:', loadedChats.length);
             setChats(loadedChats);
             setLoading(false);
         }, (error) => {
@@ -67,6 +71,13 @@ const AgentChatListScreen = () => {
             console.error("Logout failed:", error.message);
             Alert.alert("Logout Error", "Failed to log out: " + error.message);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        // The useEffect will automatically refresh the data
+        // We just need to set refreshing to false after a short delay
+        setTimeout(() => setRefreshing(false), 1000);
     };
 
     const renderChatItem = ({ item }) => {
@@ -139,10 +150,21 @@ const AgentChatListScreen = () => {
                 <Text style={styles.noChatsText}>No active chats found for your department.</Text>
             ) : (
                 <FlatList
+                    style={styles.chatList}
                     data={chats}
                     renderItem={renderChatItem}
                     keyExtractor={item => item.id}
                     contentContainerStyle={styles.chatListContent}
+                    showsVerticalScrollIndicator={true}
+                    showsHorizontalScrollIndicator={false}
+                    scrollEnabled={true}
+                    bounces={true}
+                    overScrollMode="always"
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    indicatorStyle="black"
+                    scrollIndicatorInsets={{ right: 1 }}
+                    alwaysBounceVertical={true}
                 />
             )}
         </View>
@@ -204,8 +226,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 5,
     },
+    chatList: {
+        flex: 1,
+        backgroundColor: '#f0f4f8',
+    },
     chatListContent: {
         padding: 15,
+        paddingBottom: 30,
     },
     chatItem: {
         padding: 15,

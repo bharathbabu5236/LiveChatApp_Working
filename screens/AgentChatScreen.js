@@ -99,10 +99,17 @@ const AgentChatScreen = ({ route, navigation }) => {
     };
 // Inside LiveChatApp/screens/AgentChatScreen.js
 
-const handleCloseChat = () => {
-    console.log("Close button pressed. Navigating back to Agent Chats.");
-    navigation.goBack();
-};
+    const handleCloseChat = () => {
+        console.log("Close button pressed. Navigating back to Agent Chats.");
+        navigation.goBack();
+    };
+
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSendMessage();
+        }
+    };
   
     // Remove the old renderMessage function since we're using direct mapping now
 
@@ -155,6 +162,15 @@ const handleCloseChat = () => {
                         )}
                     </View>
                 </div>
+
+                {showScrollButton && (
+                    <TouchableOpacity
+                        style={styles.scrollToBottomButton}
+                        onPress={handleScrollToBottom}
+                    >
+                        <MaterialIcons name="keyboard-arrow-down" size={24} color="white" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -165,6 +181,7 @@ const handleCloseChat = () => {
                     placeholder={chatStatus === 'closed' ? "Chat is closed" : "Type your reply..."}
                     multiline
                     editable={chatStatus !== 'closed'}
+                    onKeyPress={handleKeyPress}
                 />
                 <TouchableOpacity
                     style={[styles.sendButton, chatStatus === 'closed' && styles.sendButtonDisabled]}
@@ -349,6 +366,22 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#888',
         textAlign: 'center',
+    },
+    scrollToBottomButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: '#3498db',
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
     },
 });
 
