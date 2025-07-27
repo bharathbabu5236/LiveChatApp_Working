@@ -98,17 +98,6 @@ const AgentChatScreen = ({ route, navigation }) => {
         }
     };
 
-    const handleKeyPress = (event) => {
-        // Handle Enter key (send message)
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            handleSendMessage();
-        }
-        // Handle Shift+Enter (new line) - let it pass through naturally
-        // No need to prevent default for Shift+Enter as it should create a new line
-    };
-// Inside LiveChatApp/screens/AgentChatScreen.js
-
     const handleCloseChat = () => {
         console.log("Close button pressed. Navigating back to Agent Chats.");
         navigation.goBack();
@@ -119,6 +108,8 @@ const AgentChatScreen = ({ route, navigation }) => {
             event.preventDefault();
             handleSendMessage();
         }
+        // Handle Shift+Enter (new line) - let it pass through naturally
+        // No need to prevent default for Shift+Enter as it should create a new line
     };
   
     // Remove the old renderMessage function since we're using direct mapping now

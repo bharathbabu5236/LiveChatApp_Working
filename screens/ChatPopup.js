@@ -235,18 +235,23 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
             console.error("ChatPopup: Error sending message:", error);
             Alert.alert("Error", "Failed to send message: " + error.message);
         }
-    };
+    }
 
     const handleBotInput = () => {
-        if (inputText.trim() === '') return;
+        if (inputText.trim() === '') {
+            return;
+        }
 
         // Add user's bot input to messages for display
-        setMessages(prevMessages => [...prevMessages, {
-            id: Date.now().toString(),
-            senderType: 'user',
-            text: inputText.trim(),
-            timestamp: new Date().toLocaleString(),
-        }]);
+        setMessages(prevMessages => [
+            ...prevMessages,
+            {
+                id: Date.now().toString(),
+                senderType: 'user',
+                text: inputText.trim(),
+                timestamp: new Date().toLocaleString(),
+            }
+        ]);
 
         if (botStep === 'askName') {
             setCustomerInfo(prev => ({ ...prev, name: inputText.trim() }));
@@ -254,12 +259,15 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
             setInputText('');
             // Simulate bot response
             setTimeout(() => {
-                setMessages(prevMessages => [...prevMessages, {
-                    id: Date.now().toString() + 'bot',
-                    senderType: 'bot',
-                    text: `Nice to meet you, ${inputText.trim()}! What's your phone number?`,
-                    timestamp: new Date().toLocaleString(),
-                }]);
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    {
+                        id: Date.now().toString() + 'bot',
+                        senderType: 'bot',
+                        text: `Nice to meet you, ${inputText.trim()}! What's your phone number?`,
+                        timestamp: new Date().toLocaleString(),
+                    }
+                ]);
             }, 500);
         } else if (botStep === 'askPhone') {
             setCustomerInfo(prev => ({ ...prev, phone: inputText.trim() }));
@@ -267,12 +275,15 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
             setInputText('');
             // Simulate bot response
             setTimeout(() => {
-                setMessages(prevMessages => [...prevMessages, {
-                    id: Date.now().toString() + 'bot',
-                    senderType: 'bot',
-                    text: `Thank you! What's your preferred language for this chat?`,
-                    timestamp: new Date().toLocaleString(),
-                }]);
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    {
+                        id: Date.now().toString() + 'bot',
+                        senderType: 'bot',
+                        text: `Thank you! What's your preferred language for this chat?`,
+                        timestamp: new Date().toLocaleString(),
+                    }
+                ]);
             }, 500);
         }
     };
@@ -283,7 +294,7 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
             event.preventDefault();
             if (botStep === 'askName' || botStep === 'askPhone' || botStep === 'askLanguage') {
                 handleBotInput();
-            } else if (botStep === 'chat') {
+            } else if (botStep === 'chat' || selectedDepartment) {
                 handleSendMessage();
             }
         }
@@ -321,30 +332,7 @@ const ChatPopup = ({ visible, onClose, onAgentSelect }) => {
         setIsMinimized(!isMinimized);
     };
 
-    const handleBotInput = () => {
-        if (inputText.trim() === '') return;
 
-        if (botStep === 'askName') {
-            setCustomerInfo(prev => ({ ...prev, name: inputText.trim() }));
-            setBotStep('askPhone');
-            setInputText('');
-        } else if (botStep === 'askPhone') {
-            setCustomerInfo(prev => ({ ...prev, phone: inputText.trim() }));
-            setBotStep('showAgentOption');
-            setInputText('');
-        }
-    };
-
-    const handleKeyPress = (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            if (botStep === 'askName' || botStep === 'askPhone') {
-                handleBotInput();
-            } else if (selectedDepartment) {
-                handleSendMessage();
-            }
-        }
-    };
 
     const handleSpeakToAgent = () => {
         console.log('Speak to Agent button pressed');
