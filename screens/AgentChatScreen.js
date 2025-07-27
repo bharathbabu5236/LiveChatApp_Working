@@ -97,6 +97,16 @@ const AgentChatScreen = ({ route, navigation }) => {
             Alert.alert("Error", "Failed to send message: " + error.message);
         }
     };
+
+    const handleKeyPress = (event) => {
+        // Handle Enter key (send message)
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSendMessage();
+        }
+        // Handle Shift+Enter (new line) - let it pass through naturally
+        // No need to prevent default for Shift+Enter as it should create a new line
+    };
 // Inside LiveChatApp/screens/AgentChatScreen.js
 
     const handleCloseChat = () => {
@@ -147,18 +157,38 @@ const AgentChatScreen = ({ route, navigation }) => {
                                 <Text style={styles.emptyStateText}>No messages yet. Start the conversation!</Text>
                             </View>
                         ) : (
-                            messages.map(message => (
-                                <View key={message.id} style={[
-                                    styles.messageBubble,
-                                    message.senderId === currentAgentId ? styles.myMessage : styles.otherMessage
-                                ]}>
-                                    <Text style={styles.messageSender}>
-                                        {message.senderId === currentAgentId ? 'You' : 'Customer'}
-                                    </Text>
-                                    <Text style={styles.messageText}>{message.text}</Text>
-                                    <Text style={styles.messageTimestamp}>{message.timestamp}</Text>
-                                </View>
-                            ))
+                            messages.map(message => {
+                                // Handle different message formats
+                                let messageText = '';
+                                if (message.senderId === currentAgentId) {
+                                    // Agent's own messages use 'text' field
+                                    messageText = message.text || 'Message content not available';
+                                } else {
+                                    // Customer messages - show translated English version to agent
+                                    if (message.translatedTextEn) {
+                                        messageText = message.translatedTextEn;
+                                    } else if (message.originalText) {
+                                        messageText = message.originalText;
+                                    } else if (message.text) {
+                                        messageText = message.text;
+                                    } else {
+                                        messageText = 'Message content not available';
+                                    }
+                                }
+
+                                return (
+                                    <View key={message.id} style={[
+                                        styles.messageBubble,
+                                        message.senderId === currentAgentId ? styles.myMessage : styles.otherMessage
+                                    ]}>
+                                        <Text style={styles.messageSender}>
+                                            {message.senderId === currentAgentId ? 'You' : 'Customer'}
+                                        </Text>
+                                        <Text style={styles.messageText}>{messageText}</Text>
+                                        <Text style={styles.messageTimestamp}>{message.timestamp}</Text>
+                                    </View>
+                                );
+                            })
                         )}
                     </View>
                 </div>
